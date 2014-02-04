@@ -1,0 +1,4 @@
+include *.rst
+include LICENSE *.rst
+recursive-include fluffy/templates *.txt *.html
+recursive-include fluffy/static *
