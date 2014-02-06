@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from distutils.version import LooseVersion
+
 from fabric.operations import put
 from fabric.api import env, sudo, cd
 from fabric.contrib.files import exists
@@ -19,13 +21,34 @@ def delete_old_builds():
              'sed "1,5d" | xargs rm -rf' % env)
 
 
-def update_virtualenv():
+def update_virtualenv(use_wheels=True, update=True, exists_action='w',
+                      options=None, insecure_packages=None):
     """
     Install the dependencies in the requirements file
     """
+    options = options or []
+
+    if use_wheels:
+        options.append('--use-wheel')
+
+    if update:
+        options.append('-U')
+
+    pip_version = venv_sudo("python -c 'import pip; print pip.__version__'")
+
+    insecure_packages = insecure_packages or []
+    for pkg in insecure_packages:
+        options.append('--allow-external {}'.format(pkg))
+        if LooseVersion(pip_version) >= LooseVersion('1.5'):
+            options.append('--allow-unverified {}'.format(pkg))
+
+    options.append('--exists-action={}'.format(exists_action))
+
+    command = ['pip install'] + options + [
+        '-r deploy/requirements/{0.build}.txt'.format(env)]
+
     with cd(env.code_dir):
-        venv_sudo('pip install --use-wheel -U --exists-action=w '
-                  '-r deploy/requirements/{0.build}.txt'.format(env))
+        venv_sudo(' '.join(command))
 
 
 def deploy_cronjobs():
