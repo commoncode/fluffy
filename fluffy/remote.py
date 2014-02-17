@@ -61,6 +61,7 @@ def deploy_cronjobs():
         sudo("rename 's#BUILD#%(build)s#' deploy/cron.d/*" % env)
         sudo("sed -i 's#VIRTUALENV_ROOT#%(virtualenv)s#g' deploy/cron.d/*" % env)
         sudo("sed -i 's#BUILD_ROOT#%(code_dir)s#g' deploy/cron.d/*" % env)
+        sudo("sed -i 's#BUILD#%(build)s#g' deploy/cron.d/*" % env)
         sudo("mv deploy/cron.d/* /etc/cron.d" % env)
 
 
