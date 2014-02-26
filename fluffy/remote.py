@@ -9,6 +9,11 @@ from fabric.contrib.files import exists
 from .output import notify
 
 
+def _get_pip_version():
+    """ Get version string for remote installed pip (in virtualenv) """
+    return venv_sudo("python -c 'import pip; print pip.__version__'")
+
+
 def venv_sudo(command):
     venv = 'source {0.virtualenv}/bin/activate'.format(env)
     return sudo("{} && {}".format(venv, command))
@@ -34,7 +39,7 @@ def update_virtualenv(use_wheels=True, update=True, exists_action='w',
     if update:
         options.append('-U')
 
-    pip_version = venv_sudo("python -c 'import pip; print pip.__version__'")
+    pip_version = _get_pip_version()
 
     insecure_packages = insecure_packages or []
     for pkg in insecure_packages:
