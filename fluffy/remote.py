@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
+from StringIO import StringIO
 from distutils.version import LooseVersion
+
+from jinja2 import Template
 
 from fabric.operations import put
 from fabric.api import env, sudo, cd
@@ -156,3 +159,29 @@ def initialise_project():
     else:
         notify('Remote directory for {build} build already exists, '
                'skipping'.format(**env))
+
+
+def upload_template(template_name, remote_path, owner=None, group=None,
+                    context= None, **kwargs):
+    """
+    Render the jinja template *template_name* and upload it to *remote_path*.
+    """
+
+    with open(template_name) as fh:
+        template = Template(fh.read())
+
+    if context:
+        content = template.render(**context)
+    else:
+        content = template.render(env=env)
+
+    put_kwargs = {'temp_dir': '/tmp', 'mode': '0644'}
+    put_kwargs.update(kwargs)
+    put(StringIO(content), remote_path, use_sudo=True, **put_kwargs)
+
+    if owner:
+        if group:
+            owner = "{}:{}".format(owner, group)
+        sudo(u'chown {} {}'.format(owner, remote_path))
+    else:
+        sudo(u'chgrp {} {}'.format(group, remote_path))
