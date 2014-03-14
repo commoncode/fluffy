@@ -68,8 +68,10 @@ def set_reference_to_deploy_from(branch):
         local('git checkout develop')
 
 
-def prepare(repo='origin'):
+def prepare_plus(repo='origin', include_dirs=None):
     notify('BUILDING TO %s' % env.build.upper())
+
+    include_dirs = include_dirs or []
 
     # Ensure we have latest code locally
     branch = local('git branch | grep "^*" | cut -d" " -f2', capture=True)
@@ -78,10 +80,17 @@ def prepare(repo='origin'):
 
     # Create a build file ready to be pushed to the servers
     notify("Building from refspec %s" % env.version)
-    env.build_file = '/tmp/build-{}.tar.gz'.format(
-        str(env.version).replace('/', '-'))
-    local('git archive --format tar %s %s | gzip > %s' %
-          (env.version, env.web_dir, env.build_file))
+
+    tar_file = '/tmp/build-{}.tar'.format(str(env.version).replace('/', '-'))
+    env.build_file = '{}.gz'.format(tar_file)
+
+    local('git archive --format tar {} {} -o {}'.format(
+        env.version, env.web_dir, tar_file))
+
+    if include_dirs:
+        local('tar -rf {}'.format(' '.format(include_dirs)))
+
+    local('gzip {} > {}'.format(tar_file, env.build_file))
 
     # Set timestamp now so it is the same on all servers after deployment
     now = datetime.datetime.now()
