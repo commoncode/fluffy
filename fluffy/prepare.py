@@ -68,15 +68,20 @@ def set_reference_to_deploy_from(branch):
         local('git checkout develop')
 
 
-def prepare(repo='origin', include_dirs=None):
-    notify('BUILDING TO %s' % env.build.upper())
-
-    include_dirs = include_dirs or []
-
+def select_deployment(repo='origin'):
     # Ensure we have latest code locally
     branch = local('git branch | grep "^*" | cut -d" " -f2', capture=True)
     update_codebase(branch, repo)
     set_reference_to_deploy_from(branch)
+
+    notify("Checking out the specified tag")
+    local("git checkout {}".format(env.version))
+
+
+def prepare(repo='origin', include_dirs=None):
+    notify('BUILDING TO %s' % env.build.upper())
+
+    include_dirs = include_dirs or []
 
     # Create a build file ready to be pushed to the servers
     notify("Building from refspec %s" % env.version)
@@ -88,7 +93,8 @@ def prepare(repo='origin', include_dirs=None):
         env.version, env.web_dir, tar_file))
 
     if include_dirs:
-        local('tar -rf {}'.format(' '.format(include_dirs)))
+        local('tar rf {tar} {dirs}'.format(
+            dirs=' '.join(include_dirs), tar=tar_file))
 
     local('gzip {} > {}'.format(tar_file, env.build_file))
 
