@@ -68,7 +68,7 @@ def set_reference_to_deploy_from(branch):
         local('git checkout develop')
 
 
-def prepare_plus(repo='origin', include_dirs=None):
+def prepare(repo='origin', include_dirs=None):
     notify('BUILDING TO %s' % env.build.upper())
 
     include_dirs = include_dirs or []
