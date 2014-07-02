@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from fabric.api import env, cd, sudo, runs_once
+from fabric.api import env, cd, sudo, runs_once, local, lcd
 
 from .output import notify
 from .remote import venv_sudo
@@ -14,6 +14,13 @@ def run_manage(command):
 def _get_django_version():
     import django
     return django.VERSION
+
+
+def generate_static_files():
+    with lcd(env.web_dir):
+        local("rm -rf public/static/*")
+        local("grunt --env=dist")
+        local("./manage.py collectstatic --noinput")
 
 
 def run_offline_compressor():
