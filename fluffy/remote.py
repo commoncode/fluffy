@@ -34,7 +34,7 @@ def update_virtualenv(use_wheels=True, update=True, exists_action='w',
     """
     Install the dependencies in the requirements file
     """
-    options = options or []
+    options = options or ['--download-cache=/root/.pip/cache']
 
     if use_wheels:
         options.append('--use-wheel')
@@ -114,10 +114,6 @@ def unpack(archive_path):
 
         # Symlink in uploads folder
         sudo('ln -s ../../../media/%(build)s %(build_dir)s/public/media' % env)
-
-        # Append release info to settings.py
-        sudo("sed -i 's/UNVERSIONED/{}/' {}/settings.py".format(
-            env.version.replace('/', '-'), env.build_dir))
 
         # Add file indicating Git commit
         sudo('echo -e "refspec: %s\nuser: %s" > %s/build-info' % (env.version, env.user, env.build_dir))

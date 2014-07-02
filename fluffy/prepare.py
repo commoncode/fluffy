@@ -2,12 +2,32 @@ from __future__ import absolute_import
 
 import os
 import datetime
+import contextlib
 
 from fabric.colors import red
 from fabric.operations import prompt
 from fabric.api import env, local, runs_once
 
 from .output import notify
+from .django import _get_django_version
+
+
+def _get_current_branch_name():
+    return local("git rev-parse --abbrev-ref HEAD", capture=True)
+
+
+@contextlib.contextmanager
+def git_branch(branch_name):
+    """
+    Run context on git branch *branch_name* and then switch back to the
+    original branch.
+    """
+    current_branch = _get_current_branch_name()
+    try:
+        local('git checkout {}'.format(branch_name))
+        yield
+    finally:
+        local('git checkout {}'.format(current_branch))
 
 
 def set_ssh_user():
@@ -32,7 +52,7 @@ def set_reference_to_deploy_from(branch):
     # Versioning - we either deploy from a tag or we create a new one
     local('git fetch --tags')
 
-    if env.build == 'test':
+    if env.build == 'test' or not env.requires_tag:
         # Allow a new tag to be set, or generate on automatically
         print ''
         create_tag = prompt(red('Tag this release? [y/N] '))
@@ -58,27 +78,18 @@ def set_reference_to_deploy_from(branch):
         notify("Checking chosen tag exists")
         local('git tag | grep "%s"' % env.version)
 
-    if env.build == 'prod':
-        # If a production build, then we ensure that the master branch
-        # gets updated to include all work up to this tag
-        notify("Merging tag into master")
-        local('git checkout master')
-        local('git merge %s' % env.version)
-        local('git push origin master')
-        local('git checkout develop')
-
 
 def select_deployment(repo='origin'):
     # Ensure we have latest code locally
-    branch = local('git branch | grep "^*" | cut -d" " -f2', capture=True)
+    branch = _get_current_branch_name()
     update_codebase(branch, repo)
     set_reference_to_deploy_from(branch)
 
-    notify("Checking out the specified tag")
-    local("git checkout {}".format(env.version))
-
 
 def prepare(repo='origin', include_dirs=None):
+    env.django_version = _get_django_version()
+    env.initial_branch = _get_current_branch_name()
+
     notify('BUILDING TO %s' % env.build.upper())
 
     include_dirs = include_dirs or []
@@ -96,7 +107,7 @@ def prepare(repo='origin', include_dirs=None):
         local('tar rf {tar} {dirs}'.format(
             dirs=' '.join(include_dirs), tar=tar_file))
 
-    local('gzip {} > {}'.format(tar_file, env.build_file))
+    local('gzip -f {} > {}'.format(tar_file, env.build_file))
 
     # Set timestamp now so it is the same on all servers after deployment
     now = datetime.datetime.now()
