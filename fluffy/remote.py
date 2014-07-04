@@ -74,7 +74,10 @@ def deploy_cronjobs():
 
 
 def restart_supervisord_services():
-    sudo('supervisorctl restart %(supervisor_proc)s %(celery_proc)s' % env)
+    services = [env.supervisor_proc]
+    if hasattr(env, 'celery_proc') and env.celery_proc:
+        services.append(env.celery_proc)
+    sudo('supervisorctl restart {}'.format(' '.join(services)))
 
 
 def switch_symlink():
