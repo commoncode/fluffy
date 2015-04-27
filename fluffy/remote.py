@@ -116,7 +116,7 @@ def unpack(archive_path):
         sudo('mv %(web_dir)s %(build_dir)s' % env)
 
         # Symlink in uploads folder
-        sudo('ln -s ../../../media/%(build)s %(build_dir)s/public/media' % env)
+        sudo('ln -s %(project_dir)s/media/%(build)s %(build_dir)s/public/media' % env)
 
         # Add file indicating Git commit
         sudo('echo -e "refspec: %s\nuser: %s" > %s/build-info' % (env.version, env.user, env.build_dir))
