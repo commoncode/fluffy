@@ -30,14 +30,16 @@ def git_branch(branch_name):
         local('git checkout {}'.format(current_branch))
 
 
+@runs_once
 def set_ssh_user():
-    env.user = os.getenv('TANGENT_USER')
+    env.user = os.getenv('DEPLOYMENT_USER')
+    current = os.getenv('USER')
     if not env.user:
         env.user = prompt(
-            red('Username for remote host? [default is current user] '))
+            red('Username for remote host? [default is {}] '.format(current)))
 
     if not env.user:
-        env.user = os.getenv('USER')
+        env.user = current
 
 
 @runs_once
