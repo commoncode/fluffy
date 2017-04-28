@@ -4,9 +4,9 @@ from setuptools import setup, find_packages
 setup(
     name='fluffy',
     version="0.0.0",
-    url='https://github.com/tangentlabs/fluffy',
+    url='https://github.com/commoncode/fluffy',
     author="Sebastian Vetter",
-    author_email="sebastian.vetter@tangentsnowball.com.au",
+    author_email="",
     description="A collection of generic functions for fabric deploy scripts",
     long_description='\n\n'.join([
         open('README.rst').read(),
